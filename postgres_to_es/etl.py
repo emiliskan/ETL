@@ -1,13 +1,16 @@
+import logging
 from time import sleep
 from functools import wraps
 import os
 import psycopg2
-
+import backoff
 from extractor import PostgresExtractor
 from loader import ESLoader
 from transformer import Transformer
 
 from models import AbstractExtractor, AbstractLoader, AbstractTransformer
+
+logger = logging.getLogger()
 
 
 def coroutine(func):
@@ -20,7 +23,9 @@ def coroutine(func):
     return inner
 
 
+@backoff.on_exception(backoff.expo, BaseException)
 def etl(target):
+    logger.info("started")
     while True:
         target.send(1)
         sleep(0.1)
@@ -68,13 +73,12 @@ if __name__ == '__main__':
         'user': os.getenv('POSTGRES_USER'),
         'password': os.getenv('POSTGRES_PASSWORD'),
         'host': os.getenv('POSTGRES_HOST'),
-        'port': os.getenv('POSTGRES_PORT'),
+        'port': os.getenv('POSTGRES_PORT')
     }
 
     with psycopg2.connect(**dsl) as pg_conn:
-
         # этап загрузки в es
-        loader = load(ESLoader(os.getenv("ES_HOST")))
+        loader = load(ESLoader(os.getenv('ES_HOST')))
 
         # этап подготовки данных
         transformer = transform(loader, Transformer())
@@ -84,6 +88,3 @@ if __name__ == '__main__':
 
         # запуск etl процесса
         etl(extractor)
-
-
-#TODO: backoff, insert search schema, check search working
