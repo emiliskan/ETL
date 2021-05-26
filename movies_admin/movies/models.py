@@ -116,7 +116,13 @@ class PersonMedia(AbstractUUID):
     """ Люди в фильмах с их ролью """
     person = models.ForeignKey(Person, on_delete=models.CASCADE)
     film = models.ForeignKey(Media, on_delete=models.CASCADE)
-    person_type = models.CharField(_("роль"), max_length=20, choices=person_type, blank=False)
+    person_type = models.CharField(
+        _("роль"),
+        max_length=20,
+        choices=person_type,
+        blank=False,
+        default="actor"
+    )
 
     class Meta:
         verbose_name = _("участник в создании фильма")
