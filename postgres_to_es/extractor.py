@@ -20,32 +20,48 @@ class PostgresExtractor(AbstractExtractor):
         :return: результат выборки
         """
         sql = """
-             SELECT
-                fw.id AS id, 
+            WITH movies AS (
+                SELECT
+                    id, 
+                    title, 
+                    description, 
+                    rating, 
+                    type 
+                FROM movies_media
+                WHERE not indexed
+                LIMIT 100
+            )
+            SELECT
+                fw.id, 
+                fw.title, 
+                fw.description, 
+                fw.rating, 
+                fw.type,
+                CASE
+                    WHEN pfw.person_type = 'actor' 
+                    THEN ARRAY_AGG(distinct p.first_name || ' ' || p.last_name)
+                END AS actors,
+                CASE
+                    WHEN pfw.person_type = 'writer' 
+                    THEN ARRAY_AGG(distinct p.first_name || ' ' || p.last_name)
+                END AS writers,
+                CASE
+                    WHEN pfw.person_type = 'director' 
+                    THEN ARRAY_AGG(distinct p.first_name || ' ' || p.last_name)
+                END AS directors,
+                ARRAY_AGG(g.name) AS genres
+            FROM movies as fw
+            LEFT JOIN movies_personmedia pfw ON pfw.film_id = fw.id
+            LEFT JOIN movies_person p ON p.id = pfw.person_id
+            LEFT JOIN movies_genremedia gfw ON gfw.film_id = fw.id
+            LEFT JOIN movies_genre g ON g.id = gfw.genre_id
+            GROUP BY
+                fw.id, 
                 fw.title, 
                 fw.description, 
                 fw.rating, 
                 fw.type, 
-                CASE
-                    WHEN pfw.person_type = 'actor' THEN ARRAY_AGG(p.first_name || ' ' || p.last_name)
-                END AS actors,
-                CASE
-                    WHEN pfw.person_type = 'writer' THEN ARRAY_AGG(p.first_name || ' ' || p.last_name)
-                END AS writers,
-                CASE
-                    WHEN pfw.person_type = 'director' THEN ARRAY_AGG(p.first_name || ' ' || p.last_name)
-                END AS directors,
-                ARRAY_AGG(g.name) AS genres
-            FROM public.movies_media fw
-            LEFT JOIN public.movies_personmedia pfw ON pfw.film_id = fw.id
-            LEFT JOIN public.movies_person p ON p.id = pfw.person_id
-            LEFT JOIN public.movies_genremedia gfw ON gfw.film_id = fw.id
-            LEFT JOIN public.movies_genre g ON g.id = gfw.genre_id
-            WHERE fw.indexed = false
-            GROUP BY
-                fw.id, 
-                pfw.person_type
-            LIMIT 100;                    
+                pfw.person_type	                   
         """
 
         self.cursor.execute(sql)
