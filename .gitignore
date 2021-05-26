@@ -5,7 +5,7 @@
 venv/
 ENV/
 
-src/static/
+static/
 
 # intellij ide
 .idea/

@@ -43,7 +43,7 @@ services:
 
   nginx:
     build:
-      src/.
+      nginx/.
     depends_on:
       - web
     ports:
@@ -52,14 +52,14 @@ services:
   etl:
     build:
       postgres_to_es/.
-    command: python etl.py
+    command: python -u etl.py
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_PORT=${POSTGRES_PORT}
       - POSTGRES_DB=${POSTGRES_DB}
-      - ES_HOST==${ES_HOST}
+      - ES_HOST=${ES_HOST}
     volumes:
       - ./postgres_to_es:/etl
     depends_on:
