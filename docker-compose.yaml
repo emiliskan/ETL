@@ -1,0 +1,80 @@
+version: '3'
+
+services:
+  web:
+    build: movies_admin/.
+    command: >
+      sh -c "
+      python manage.py makemigrations &&
+      python manage.py migrate movies --fake-initial &&
+      python manage.py migrate &&
+      python manage.py create_superuser &&
+      gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - SUPERUSER_NAME=${SUPERUSER_NAME}
+      - SUPERUSER_PASS=${SUPERUSER_PASS}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+    volumes:
+      - ./movies_admin:/web_django
+    ports:
+      - '8000:8000'
+    expose:
+      - '8000'
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    restart: always
+    expose:
+      - '5432'
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+
+  nginx:
+    build:
+      src/.
+    depends_on:
+      - web
+    ports:
+      - '81:81'
+    restart: always
+  etl:
+    build:
+      postgres_to_es/.
+    command: python etl.py
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - ES_HOST==${ES_HOST}
+    volumes:
+      - ./postgres_to_es:/etl
+    depends_on:
+      - es
+      - web
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.12.1
+    ports:
+      - '9200:9200'
+    environment:
+      - discovery.type=single-node
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+
+volumes:
+  postgres_data:
+  es_data:
