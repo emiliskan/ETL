@@ -1,4 +1,19 @@
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABCMeta, abstractmethod
+from pydantic import BaseSettings, Field
+
+
+class PostgreSettings(BaseSettings):
+    """
+    Настройки подключения к базе данных
+    """
+    dbname: str = Field(..., env='POSTGRES_DB')
+    user: str = Field(..., env='POSTGRES_USER')
+    password: str = Field(..., env='POSTGRES_PASSWORD')
+    host: str = Field(..., env='POSTGRES_HOST')
+    port: str = Field(..., env='POSTGRES_PORT')
+
+    class Config:
+        env_file: str = '.env'
 
 
 class AbstractExtractor:
@@ -29,6 +44,7 @@ class AbstractTransformer:
         :param row: объект для преобразования
         :return:
         """
+
 
 class AbstractLoader:
     __metaclass__ = ABCMeta

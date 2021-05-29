@@ -1,3 +1,5 @@
 psycopg2-binary==2.8.6
 requests==2.25.1
 backoff==1.10.0
+pydantic==1.8.2
+python-dotenv==0.17.1

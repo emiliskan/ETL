@@ -126,7 +126,7 @@ class PersonMedia(AbstractUUID):
 
     class Meta:
         verbose_name = _("участник в создании фильма")
-        verbose_name_plural = _("участики в создании фильма")
+        verbose_name_plural = _("участники в создании фильма")
         unique_together = [["person", "film", "person_type"]]
 
     def __str__(self):

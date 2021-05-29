@@ -8,7 +8,7 @@ from extractor import PostgresExtractor
 from loader import ESLoader
 from transformer import Transformer
 
-from models import AbstractExtractor, AbstractLoader, AbstractTransformer
+from models import AbstractExtractor, AbstractLoader, AbstractTransformer, PostgreSettings
 
 logger = logging.getLogger()
 
@@ -25,13 +25,14 @@ def coroutine(func):
 
 @backoff.on_exception(backoff.expo, BaseException)
 def etl(target):
-    logger.info("started")
+    logger.info('started')
     while True:
         target.send(1)
         sleep(0.1)
 
 
 @coroutine
+@backoff.on_exception(backoff.expo, BaseException)
 def extract(target, extractor: AbstractExtractor):
     """ Получение неиндексированных фильмов """
     while _ := (yield):
@@ -46,6 +47,7 @@ def extract(target, extractor: AbstractExtractor):
 
 
 @coroutine
+@backoff.on_exception(backoff.expo, BaseException)
 def transform(target, transformer: AbstractTransformer):
     """ Подготовка записей для загрузки в elastic """
     while result := (yield):
@@ -57,6 +59,7 @@ def transform(target, transformer: AbstractTransformer):
 
 
 @coroutine
+@backoff.on_exception(backoff.expo, BaseException)
 def load(loader: AbstractLoader):
     """ Загрузка в elastic """
     while data := (yield):
@@ -64,19 +67,13 @@ def load(loader: AbstractLoader):
             continue
 
         loader.load(data)
-        print("Loaded!")
+
+        logging.info('Loaded!')
 
 
 if __name__ == '__main__':
-    dsl = {
-        'dbname': os.getenv('POSTGRES_DB'),
-        'user': os.getenv('POSTGRES_USER'),
-        'password': os.getenv('POSTGRES_PASSWORD'),
-        'host': os.getenv('POSTGRES_HOST'),
-        'port': os.getenv('POSTGRES_PORT')
-    }
 
-    with psycopg2.connect(**dsl) as pg_conn:
+    with psycopg2.connect(**PostgreSettings().dict()) as pg_conn:
         # этап загрузки в es
         loader = load(ESLoader(os.getenv('ES_HOST')))
 

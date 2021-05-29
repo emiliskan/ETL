@@ -6,6 +6,7 @@ import random
 
 from movies.factories import PersonFactory
 
+"""
 NUM_FILM = 1000000000
 NUM_SERIAL = 2000000
 NUM_MEDIA = NUM_FILM + NUM_SERIAL
@@ -19,7 +20,7 @@ NUM_SERIAL = 200
 NUM_MEDIA = NUM_FILM + NUM_SERIAL
 NUM_GENRE = 100
 NUM_PERSONS = 100
-"""
+
 
 class Command(BaseCommand):
     help = "Generate test data"

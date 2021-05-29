@@ -67,7 +67,7 @@ class PostgresExtractor(AbstractExtractor):
         self.cursor.execute(sql)
         self.data = self.cursor.fetchall()
 
-        logger.info("Extracted", len(self.data))
+        logger.info('Extracted', len(self.data))
         return self.data
 
     def set_index(self):
@@ -76,14 +76,14 @@ class PostgresExtractor(AbstractExtractor):
         Снятие индексации происходит во время обновления записей в админке
         :return:
         """
-        data = ','.join(self.cursor.mogrify("%s", (item["id"],)).decode()
+        data = ','.join(self.cursor.mogrify('%s', (item['id'],)).decode()
                         for item in self.data)
         sql = f"""
-            UPDATE content.movies_media
+            UPDATE movies_media
             SET indexed = True
             WHERE id in ({data});
         """
 
         self.cursor.execute(sql, (data, ))
         self.conn.commit()
-        logger.info("Indexed")
+        logger.info('Indexed')

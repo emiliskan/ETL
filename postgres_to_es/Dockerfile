@@ -7,12 +7,15 @@ WORKDIR /etl
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# install psycopg2 dependencies
+# install psycopg2 and curl
 RUN apk update \
-    && apk add postgresql-dev gcc python3-dev musl-dev
+    && apk add postgresql-dev gcc python3-dev musl-dev \
+    && apk --no-cache add curl
 
-# install dependencies
+# install python dependencies
 RUN pip install --upgrade pip
 COPY requirements.txt /etl/
 RUN pip install -r requirements.txt
+
+COPY wait_to_start.sh /etl/
 
